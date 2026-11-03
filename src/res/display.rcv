@@ -8,7 +8,7 @@
 #define VER_INTERNALNAME_STR       "DISPLAY"
 #define VER_ORIGINALFILENAME_STR   "vbe9x.drv"
 #define VER_LEGALCOPYRIGHT_STR     "Copyright \251 2026 Lexo Liu; portions \251 2012-2022 Michal Necasek"
-#define VER_COMPANYNAME_STR        "vbe9x\0"
+#define VER_COMPANYNAME_STR        "Lexo Liu\0"
 
 #define VER_PRODUCTNAME_STR         "vbe9x\0"
 #define VER_PRODUCTVERSION          0,1,0,0
