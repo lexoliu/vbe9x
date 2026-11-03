@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
+  artifact-metadata: write
 
 jobs:
   release:
@@ -30,6 +33,14 @@ jobs:
 
       - name: Build
         run: tools/build.sh
+
+      - name: Attest build provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            build/vbe9x.drv
+            install/vbe9x.inf
+            install/vbe9x.reg
 
       - name: Publish
         env:
