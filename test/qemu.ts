@@ -62,7 +62,9 @@ const qmp = listen((d) => qmpLines.push(d));
 
 const qemu = Bun.spawn(
   [
-    "qemu-system-i386", "-M", "pc", "-cpu", "pentium2", "-m", `${MEMORY_SIZE >> 20}M`,
+    // The PC speaker goes to a silent audio backend, never the host's.
+    "qemu-system-i386", "-M", "pc,pcspk-audiodev=snd0", "-audiodev", "none,id=snd0",
+    "-cpu", "pentium2", "-m", `${MEMORY_SIZE >> 20}M`,
     "-vga", "std", "-global", `VGA.vgamem_mb=${VGA_MEMORY_MB}`, "-display", "none",
     "-drive", `file=${image},format=raw,if=ide,index=0`,
     // The image's NE2000 is configured at I/O 300h; without the card Windows stops at a dialog.
