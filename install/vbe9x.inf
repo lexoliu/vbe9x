@@ -1,0 +1,65 @@
+; vbe9x: display driver for the Bochs VBE adapter (QEMU -vga std, v86, Bochs).
+; The adapter is PCI 1234:1111 where Windows enumerated PCI, and the root VGA device
+; *PNP0900 where it did not (disks on real-mode drivers).
+
+[Version]
+Signature="$CHICAGO$"
+Class=DISPLAY
+Provider=%Mfg%
+
+[DestinationDirs]
+DefaultDestDir=11
+
+[SourceDisksNames]
+1=%DiskName%,,1
+
+[SourceDisksFiles]
+vbe9x.drv=1
+
+[Manufacturer]
+%Mfg%=Mfg.VBE9X
+
+[Mfg.VBE9X]
+%DeviceDesc%=VBE9X,PCI\VEN_1234&DEV_1111
+%DeviceDesc%=VBE9X,*PNP0900
+
+[VBE9X]
+CopyFiles=VBE9X.Copy
+DelReg=VBE9X.DelReg
+AddReg=VBE9X.AddReg
+
+[VBE9X.Copy]
+vbe9x.drv
+
+[VBE9X.DelReg]
+HKR,,Ver
+HKR,,DevLoader
+HKR,DEFAULT
+HKR,MODES
+HKR,CURRENT
+
+[VBE9X.AddReg]
+HKR,,Ver,,4.0
+HKR,,DevLoader,,*vdd
+HKR,DEFAULT,Mode,,"16,1024,768"
+HKR,DEFAULT,drv,,vbe9x.drv
+HKR,DEFAULT,vdd,,*vdd
+HKR,DEFAULT,RefreshRate,,-1
+HKR,DEFAULT,ExtModeSwitch,,0
+HKR,"MODES\8\640,480"
+HKR,"MODES\8\800,600"
+HKR,"MODES\8\1024,768"
+HKR,"MODES\8\1280,1024"
+HKR,"MODES\16\640,480"
+HKR,"MODES\16\800,600"
+HKR,"MODES\16\1024,768"
+HKR,"MODES\16\1280,1024"
+HKR,"MODES\32\640,480"
+HKR,"MODES\32\800,600"
+HKR,"MODES\32\1024,768"
+HKR,"MODES\32\1280,1024"
+
+[Strings]
+Mfg="vbe9x"
+DiskName="vbe9x driver disk"
+DeviceDesc="Bochs VBE display adapter (vbe9x)"

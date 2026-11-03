@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check the tag against the driver version
+        run: |
+          version=$(sed -n 's/^#define VER_PRODUCTVERSION_STR *"\([0-9.]*\)\\0"$/\1/p' src/res/display.rcv)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match the driver version $version in src/res/display.rcv" >&2
+            exit 1
+          fi
+
+      - name: Restore Open Watcom
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/vbe9x/watcom-*
+          key: watcom-${{ runner.os }}-${{ hashFiles('tools/watcom.sh') }}
+
+      - name: Build
+        run: tools/build.sh
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --generate-notes \
+            build/vbe9x.drv install/vbe9x.inf install/vbe9x.reg THIRD-PARTY-NOTICES
