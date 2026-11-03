@@ -5,7 +5,7 @@
 [Version]
 Signature="$CHICAGO$"
 Class=DISPLAY
-Provider=%Mfg%
+Provider=%Provider%
 
 [DestinationDirs]
 DefaultDestDir=11
@@ -60,6 +60,7 @@ HKR,"MODES\32\1024,768"
 HKR,"MODES\32\1280,1024"
 
 [Strings]
+Provider="Lexo Liu"
 Mfg="vbe9x"
 DiskName="vbe9x driver disk"
 DeviceDesc="Bochs VBE display adapter (vbe9x)"

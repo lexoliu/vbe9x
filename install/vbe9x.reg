@@ -2,6 +2,7 @@ REGEDIT4
 
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Class\Display\0000]
 "DriverDesc"="Bochs VBE display adapter (vbe9x)"
+"ProviderName"="Lexo Liu"
 "Ver"="4.0"
 "DevLoader"="*vdd"
 
