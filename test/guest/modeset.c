@@ -20,25 +20,74 @@
 
 static HANDLE   hCom;
 
-static void Reply( const char *lpLine )
+/* COM1 is opened for overlapped I/O. Received bytes are waited for with WaitCommEvent
+ * (EV_RXCHAR) and taken with reads that return at once with what is queued. A read left
+ * pending until bytes arrive, blocking or overlapped, can stay asleep on Windows 95 with
+ * the bytes in the port's receive queue until another byte comes.
+ */
+static OVERLAPPED   ovRead;
+static OVERLAPPED   ovWrite;
+static OVERLAPPED   ovWait;
+static BOOL         bWaiting;
+static DWORD        dwEvents;
+static char         acIn[128];
+static DWORD        cbIn;
+static DWORD        iIn;
+
+/* Waits for an overlapped operation on COM1, given whether starting it succeeded; returns
+ * whether it completed.
+ */
+static BOOL Finish( BOOL bStarted, OVERLAPPED *lpOv, DWORD *lpdwDone )
+{
+    if( !bStarted && GetLastError() != ERROR_IO_PENDING )
+        return( FALSE );
+    return( GetOverlappedResult( hCom, lpOv, lpdwDone, TRUE ) );
+}
+
+/* Returns the next byte received on COM1, or -1 on failure. The wait is posted before the
+ * queue is read, so a byte is either in what the read returns or ends the wait.
+ */
+static int NextByte( void )
 {
     DWORD   dwDone;
 
-    WriteFile( hCom, lpLine, strlen( lpLine ), &dwDone, NULL );
-    WriteFile( hCom, "\n", 1, &dwDone, NULL );
+    while( iIn == cbIn ) {
+        if( !bWaiting ) {
+            if( !WaitCommEvent( hCom, &dwEvents, &ovWait ) && GetLastError() != ERROR_IO_PENDING )
+                return( -1 );
+            bWaiting = TRUE;
+        }
+        if( !Finish( ReadFile( hCom, acIn, sizeof( acIn ), &cbIn, &ovRead ), &ovRead, &cbIn ) )
+            return( -1 );
+        iIn = 0;
+        if( cbIn )
+            break;
+        if( !GetOverlappedResult( hCom, &ovWait, &dwDone, TRUE ) )
+            return( -1 );
+        bWaiting = FALSE;
+    }
+    return( (unsigned char)acIn[iIn++] );
+}
+
+static void Reply( const char *lpLine )
+{
+    char    szLine[2050];
+    int     cb = sprintf( szLine, "%s\n", lpLine );
+    DWORD   dwDone;
+
+    if( !Finish( WriteFile( hCom, szLine, cb, &dwDone, &ovWrite ), &ovWrite, &dwDone ) || dwDone != (DWORD)cb )
+        ExitProcess( 1 );
 }
 
 static int ReadLine( char *lpBuf, int cbBuf )
 {
     int     n = 0;
-    char    c;
-    DWORD   dwDone;
+    int     c;
 
     for( ;; ) {
-        if( !ReadFile( hCom, &c, 1, &dwDone, NULL ) )
+        c = NextByte();
+        if( c < 0 )
             return( 0 );
-        if( !dwDone )
-            continue;
         if( c == '\r' || c == '\n' ) {
             if( n ) {
                 lpBuf[n] = 0;
@@ -132,12 +181,23 @@ static void DrawPattern( int cx, int cy )
 
 int PASCAL WinMain( HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow )
 {
-    char    szLine[128];
-    char    szOut[2048];
-    DCB     dcb;
+    char            szLine[128];
+    char            szOut[2048];
+    DCB             dcb;
+    COMMTIMEOUTS    to;
 
-    hCom = CreateFile( "COM1", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
+    hCom = CreateFile( "COM1", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL );
     if( hCom == INVALID_HANDLE_VALUE )
+        return( 1 );
+    ovRead.hEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
+    ovWrite.hEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
+    ovWait.hEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
+    if( !ovRead.hEvent || !ovWrite.hEvent || !ovWait.hEvent )
+        return( 1 );
+    /* Reads return at once with what is queued; writes never time out. */
+    memset( &to, 0, sizeof( to ) );
+    to.ReadIntervalTimeout = MAXDWORD;
+    if( !SetCommTimeouts( hCom, &to ) || !SetCommMask( hCom, EV_RXCHAR ) )
         return( 1 );
     memset( &dcb, 0, sizeof( dcb ) );
     dcb.DCBlength = sizeof( dcb );
