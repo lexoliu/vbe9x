@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 2,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "vbe9x-test",
+      "dependencies": {
+        "v86": "0.5.473",
+      },
+    },
+  },
+  "packages": {
+    "v86": ["v86@0.5.473", "", {}, "sha512-mNHB0DXDmfxn0CrlqCmlgMR1W7aKuD+sHmSctLcTROOwpOvbE4qsAhmaE6Vy+riQfcE4PfA2xvW59/ZXsYnHNw=="],
+  }
+}
