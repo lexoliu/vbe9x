@@ -1,0 +1,27 @@
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Class\Display\0000]
+"DriverDesc"="Bochs VBE display adapter (vbe9x)"
+"Ver"="4.0"
+"DevLoader"="*vdd"
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Class\Display\0000\DEFAULT]
+"drv"="vbe9x.drv"
+"vdd"="*vdd"
+"Mode"="16,1024,768"
+"RefreshRate"="-1"
+"ExtModeSwitch"="0"
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Class\Display\0000\MODES\16\640,480]
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Class\Display\0000\MODES\16\800,600]
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Class\Display\0000\MODES\16\1024,768]
+
+[HKEY_CURRENT_CONFIG\Display\Settings]
+"Resolution"="1024,768"
+"BitsPerPixel"="16"
+
+[HKEY_LOCAL_MACHINE\Config\0001\Display\Settings]
+"Resolution"="1024,768"
+"BitsPerPixel"="16"

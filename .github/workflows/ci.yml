@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+    paths: &driver-paths
+      - src/**
+      - install/**
+      - test/**
+      - tools/**
+      - makefile
+      - .github/workflows/ci.yml
+  pull_request:
+    paths: *driver-paths
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restore Open Watcom
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/vbe9x/watcom-*
+          key: watcom-${{ runner.os }}-${{ hashFiles('tools/watcom.sh') }}
+
+      - name: Build
+        run: tools/build.sh
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: build
+          path: |
+            build/vbe9x.drv
+            build/modeset.exe
+          if-no-files-found: error
+
+  qemu:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install QEMU and mtools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends qemu-system-x86 mtools
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+        working-directory: test
+
+      # The C: image is the site's (lexoliu/lexoliu), fetched chunk by chunk against its
+      # pinned manifest; see test/image.ts.
+      - name: Restore the Windows 95 image
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/vbe9x/hda
+            ~/.cache/vbe9x/sources
+          key: win95-${{ hashFiles('test/sources.json') }}
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: build
+          path: build
+
+      - name: Boot test
+        run: bun test/qemu.ts --build build --out build/test-qemu
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots-qemu
+          path: |
+            build/test-qemu/*.png
+            build/test-qemu/driver.log
+          if-no-files-found: ignore
